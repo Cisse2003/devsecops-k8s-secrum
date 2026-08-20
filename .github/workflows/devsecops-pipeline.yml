@@ -1,0 +1,52 @@
+name : DevSecOps CI/CD Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  sast-and-iac-scan:
+    name: Analyse Code et Infrastructure (SAST & IaC)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      #1 Analyse SAST du code python avec Semgrep
+      - name: Scan SAST (Semgrep)
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/python
+
+      #2 Scan des fichiers Kubernetes et Dockerfile avec Checkov
+      - name: Scan IaC (Checkov)
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: all
+          output_format: cli
+          soft_fail: false    # Fait échouer le pipeline si une faille grave est détectée
+
+  container-security:
+    name: Build et Scan de l'Image Conteneur
+    needs: sast-and-iac-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Récupération du code
+        uses: actions/checkout@v4
+
+      # Build de l'image en local dans le runner GitHub
+      - name: Build de l'image Docker
+        run: docker build -t devsecops-app:${{ github.sha }} ./app
+
+      # 3. Scan de l'image Docker construite avec Trivy
+      - name: Scan de vulnérabilités (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'devsecops-app:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1' # Bloque le pipeline si des vulnérabilités CRITICAL sont trouvées
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'

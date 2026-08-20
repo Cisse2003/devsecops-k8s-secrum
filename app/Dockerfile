@@ -14,7 +14,12 @@ WORKDIR /app
 # Création d'un groupe et d'un user système non privilégié (UID/GID 10001)
 # l'option -s /bin/false empêche 'louverture d'un shell interactif par défaut
 
-RUN groupadd -g 10001 appuser && \ useradd -u 10001 -g appsuer -s /bin/false appsuer
+# ANCIENNE VERSION (qui échoue) :
+#RUN groupadd -g 10001 appuser && \ useradd -u 10001 -g appsuer -s /bin/false appsuer
+
+# NOUVELLE VERSION (compatible Debian slim) :
+RUN addgroup --gid 10001 appuser && \
+    adduser --uid 10001 --ingroup appuser --disabled-password --shell /bin/false appuser
 
 # copie des dependances compilées depuis le Build
 COPY --from=builder /root/.local /home/appuser.local
