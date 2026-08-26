@@ -1,6 +1,6 @@
 # DevSecOps & Kubernetes Runtime Security Pipeline
 
-This repository demonstrates an end-to-end **DevSecOps pipeline** and **Kubernetes hardening architecture** built to secure cloud-native applications across the entire software development lifecycle (SDLC)—from static code analysis to real-time runtime intrusion detection.
+This repository demonstrates an end-to-end **DevSecOps pipeline** and **Kubernetes hardening architecture** built to secure cloud-native applications across the entire software development lifecycle (SDLC) - from static code analysis to real-time runtime intrusion detection.
 
 ---
 
