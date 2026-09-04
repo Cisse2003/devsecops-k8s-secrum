@@ -1,45 +1,38 @@
 # Build
-
 FROM python:3.11-slim AS builder
 WORKDIR /app
 
-# Mise à jour des outils de packaging pour corriger les CVEs système
-RUN pip install --no-cache-dir --upgrade pip "setuptools>=70.0.0" "wheel>=0.45.1" "jaraco.context>=5.3.0"
-
 COPY requirements.txt .
 
-# Installation des dépendances dans le répertoire utilisateur pour ne pas polluer l'image globale
+# Installation des dépendances dans le répertoire utilisateur du builder
 RUN pip install --user --no-cache-dir -r requirements.txt
+
 
 # Runtime
 FROM python:3.11-slim
 WORKDIR /app
 
-# Création d'un groupe et d'un user système non privilégié (UID/GID 10001)
-# l'option -s /bin/false empêche 'louverture d'un shell interactif par défaut
+# Mise à jour directe des paquets système Python vulnérables dans l'image finale
+RUN pip install --no-cache-dir --upgrade pip "wheel>=0.45.1" "jaraco.context>=5.3.0"
 
-# ANCIENNE VERSION (qui échoue) :
-#RUN groupadd -g 10001 appuser && \ useradd -u 10001 -g appsuer -s /bin/false appsuer
-
-# NOUVELLE VERSION (compatible Debian slim) :
+# Création de l'utilisateur non privilégié
 RUN addgroup --gid 10001 appuser && \
     adduser --uid 10001 --ingroup appuser --disabled-password --shell /bin/false appuser
 
-# copie des dependances compilées depuis le Build
-COPY --from=builder /root/.local /home/appuser.local
+# Copie des dépendances compilées depuis le Build (FIX: /home/appuser/.local avec le point)
+COPY --from=builder /root/.local /home/appuser/.local
 COPY app.py .
 
-# Mettre a jour le path pour executer gunicorn
+# Mettre à jour les permissions pour l'utilisateur appuser
+RUN chown -R appuser:appuser /home/appuser/.local /app
+
 ENV PATH=/home/appuser/.local/bin:$PATH
 
-# user non root
 USER 10001
 
 EXPOSE 5000
 
-# Healthcheck pour verifier l'etat du serveur Flask/Gunicorn
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5000/ || exit 1
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:5000/')" || exit 1
 
-# serveur WSGI de gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"]
