@@ -2,6 +2,10 @@
 
 FROM python:3.11-slim AS builder
 WORKDIR /app
+
+# Mise à jour des outils de packaging pour corriger les CVEs système
+RUN pip install --no-cache-dir --upgrade pip "setuptools>=70.0.0" "wheel>=0.45.1" "jaraco.context>=5.3.0"
+
 COPY requirements.txt .
 
 # Installation des dépendances dans le répertoire utilisateur pour ne pas polluer l'image globale
