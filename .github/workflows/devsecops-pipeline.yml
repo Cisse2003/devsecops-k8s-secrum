@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: ["main"]
 
+# Moindre privilège au niveau global
+permissions:
+  contents: read
+  security-events: write # Si on publie des rapports SARIF/Security dans GitHub Security
 jobs:
   sast-and-iac-scan:
     name: Analyse Code et Infrastructure (SAST & IaC)
