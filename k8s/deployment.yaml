@@ -29,8 +29,10 @@ spec:
         fsGroup: 10001
       containers:
       - name: app
-        image: mon-registry/devsecops-app:1.0.0 # Fix CKV_K8S_14 & CKV_K8S_43: tag fixe (ou sha256:...)
-        imagePullPolicy: Never # Utilise l'image locale du cluster (Minikube/Kind)
+        # Fix CKV_K8S_43: Utilise un digest sha256 ou un tag immuable précis
+        image: python:3.11-slim@sha256:4b0945939257e8055a40b3fa8f5d0f19c9914619d854495521b473f88d754127
+        #FIx CKV_K8S_15 - Force le téléchargement de l'image
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
         # Sécurité au niveau du Conteneur
