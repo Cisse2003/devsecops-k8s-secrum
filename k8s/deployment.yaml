@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: devsecops-app
-  namespace: default
+  namespace: devsecops-ns  # FIx CKV_K8S_21 - évite le namespace default
   labels:
     app: devsecops-app
 spec:
@@ -20,6 +20,7 @@ spec:
         vault.hashicorp.com/role: "app-role"
         vault.hashicorp.com/agent-inject-secret-database-config.txt: "secret/data/db-cred"
     spec:
+      automountServiceAccountToken: false # Fix CKV_K8S_38 - désactive le token K8s inutile
       # Sécurité au niveau du Pod
       securityContext:
         runAsNonRoot: true
@@ -28,7 +29,7 @@ spec:
         fsGroup: 10001
       containers:
       - name: app
-        image: devsecops-app:latest
+        image: mon-registry/devsecops-app:1.0.0 # Fix CKV_K8S_14 & CKV_K8S_43: tag fixe (ou sha256:...)
         imagePullPolicy: Never # Utilise l'image locale du cluster (Minikube/Kind)
         ports:
         - containerPort: 5000
@@ -46,6 +47,13 @@ spec:
           requests:
             cpu: "100m"
             memory: "128Mi"
+        # Fix CKV_K8S_8: ajout de la Liveness Probe
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
         readinessProbe:
           httpGet:
             path: /healthz
