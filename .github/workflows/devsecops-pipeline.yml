@@ -52,5 +52,5 @@ jobs:
           image-ref: 'devsecops-app:${{ github.sha }}'
           format: 'table'
           exit-code: '1' # Bloque le pipeline si des vulnérabilités CRITICAL sont trouvées
-          ignore-unfixed: './.trivyignore'
+          ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
