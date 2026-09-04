@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devsecops-app
+  namespace: default
+  labels:
+    app: devsecops-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: devsecops-app
+  template:
+    metadata:
+      labels:
+        app: devsecops-app
+      annotations:
+        # Annotations pour l'injection automatique des secrets HashiCorp Vault
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: "app-role"
+        vault.hashicorp.com/agent-inject-secret-database-config.txt: "secret/data/db-cred"
+    spec:
+      # Sécurité au niveau du Pod
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+      - name: app
+        image: devsecops-app:latest
+        imagePullPolicy: Never # Utilise l'image locale du cluster (Minikube/Kind)
+        ports:
+        - containerPort: 5000
+        # Sécurité au niveau du Conteneur
+        securityContext:
+          allowPrivilegeEscalation: false # Interdit l'élévation de privilèges (ex: sudo)
+          readOnlyRootFilesystem: true    # Rendre le système de fichiers immuable
+          capabilities:
+            drop:
+            - ALL                         # Supprime toutes les capacités Linux (CAP_SYS_ADMIN, etc.)
+        resources:
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 5000
+          initialDelaySeconds: 5
+          periodSeconds: 10

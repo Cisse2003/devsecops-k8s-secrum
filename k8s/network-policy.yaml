@@ -1,0 +1,28 @@
+# 1. Bloquer tout le trafic entrant/sortant du namespace default
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: default
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+# 2. Autoriser uniquement l'accès au port 5000 de l'application
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-app-ingress
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      app: devsecops-app
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 5000
+  policyTypes:
+  - Ingress

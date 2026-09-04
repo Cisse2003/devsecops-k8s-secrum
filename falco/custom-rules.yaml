@@ -1,0 +1,14 @@
+customRules:
+  app-custom-rules.yaml: |
+    - rule: Shell en Terminal dans un Conteneur Applicatif
+      desc: Detection de l execution d un shell interactif dans un pod applicatif
+      condition: >
+        spawned_process and
+        container and
+        shell_procs and
+        k8s.ns.name = "default" and
+        k8s.pod.name startswith "devsecops-app"
+      output: >
+        [ALERTE SECURITE CRITIQUE] Shell interactif detecte !
+        (user=%user.name pod=%k8s.pod.name process=%proc.name cmdline=%proc.cmdline container_id=%container.id)
+      priority: WARNING
